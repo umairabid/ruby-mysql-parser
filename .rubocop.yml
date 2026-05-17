@@ -1,0 +1,12 @@
+AllCops:
+  NewCops: enable
+
+plugins:
+  - rubocop-rake
+  - rubocop-rspec
+
+Layout/HeredocIndentation:
+  Enabled: true
+
+Style/MultipleComparison:
+  Enabled: false
