@@ -153,4 +153,12 @@ RSpec.describe MysqlParser::Parser::Where do
     expect(parse("SELECT * FROM users WHERE age <> 18")[0][:operator]).to eq("<>")
     expect(parse("SELECT * FROM users WHERE name LIKE test")[0][:operator]).to eq("like")
   end
+  
+  it "parses strings with spaces" do
+    result = parse("SELECT * FROM users WHERE name = 'John Doe'")
+
+    expect(result).to eq([
+      { left_side: "name", operator: "=", right_side: "'John Doe'" }
+    ])
+  end
 end

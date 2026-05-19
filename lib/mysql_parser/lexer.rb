@@ -1,8 +1,10 @@
 module MysqlParser
   class Lexer
     def initialize(sql)
-      normalized = sql.gsub(/([(),])/, ' \1 ').strip
+      escaped_spaces = sql.gsub(/'([^']*)'/) { |match| match.gsub(/\s+/, '__SPACE__') }
+      normalized = escaped_spaces.gsub(/([(),])/, ' \1 ').strip
       @tokens = normalized.split(/\s+/)
+      @tokens.map! { |t| t.gsub('__SPACE__', ' ') }
       @pos = 0
     end
 
