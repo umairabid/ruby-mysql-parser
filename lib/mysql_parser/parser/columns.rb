@@ -43,6 +43,7 @@ module MysqlParser
         @lexer.advance
       end
 
+
       def parse_aggregate
         return unless AGGREGATE_FUNCTIONS.include?(@lexer.current&.downcase) && @lexer.peek == "("
 
