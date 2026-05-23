@@ -31,6 +31,10 @@ RSpec.describe "Columns Parser" do
 
   context "when using distinct" do
     it "parses distinct on one column" do
+      sql = "SELECT DISTINCT name FROM users"
+      result = parse(sql)
+
+      puts result.inspect
     end
 
     it "parses distinct on multiple columns" do

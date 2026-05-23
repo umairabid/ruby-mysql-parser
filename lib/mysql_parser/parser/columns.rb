@@ -19,21 +19,23 @@ module MysqlParser
       private
 
       def parse_column(parent: nil)
+        puts "came here 1"
         if distinct?
+          puts "came here 2"
           parse_distinct
         elsif aggregate?
           parse_aggregate
         elsif subquery?
           parse_subquery
-        else
-          @lexer.advance
         end
-        if parent.nil?
-          { column_name: column_name, column_alias: column_alias }
+        result = if parent.nil?
+          { column_name: @lexer.current, column_alias: parse_alias }
         else
-          parent[:columns] << { column_name: column_name, column_alias: column_alias }
+          parent[:columns] << { column_name: @lexer.current, column_alias: parse_alias }
           parent
         end
+        @lexer.advance
+        result
       end
 
       def parse_alias
@@ -42,7 +44,6 @@ module MysqlParser
         @lexer.advance
         @lexer.advance
       end
-
 
       def parse_aggregate
         return unless AGGREGATE_FUNCTIONS.include?(@lexer.current&.downcase) && @lexer.peek == "("
@@ -53,10 +54,11 @@ module MysqlParser
       end
 
       def parse_distinct
+        puts "came here 3"
         @lexer.advance
         @lexer.advance if @lexer.current == "("
 
-        parse_column({ type: :distinct, columns: [] })
+        parse_column(parent: { type: :distinct, columns: [] })
       end
 
       def skip_comma
