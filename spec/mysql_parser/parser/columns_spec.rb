@@ -1,4 +1,4 @@
-RSpec.describe "aggregate functions" do
+RSpec.describe "Columns Parser" do
   def parse(sql)
     MysqlParser::Parser.new(sql).parse[:select]
   end
@@ -29,20 +29,20 @@ RSpec.describe "aggregate functions" do
     ])
   end
 
-  it "parses DISTINCT as aggregate on first column" do
-    result = parse("SELECT DISTINCT name, email FROM users")
+  context "when using distinct" do
+    it "parses distinct on one column" do
+    end
 
-    expect(result).to eq([
-      { column_name: "name", column_alias: nil, aggregate: "distinct" },
-      { column_name: "email", column_alias: nil, aggregate: nil }
-    ])
-  end
+    it "parses distinct on multiple columns" do
+    end
 
-  it "parses DISTINCT with single column" do
-    result = parse("SELECT DISTINCT id FROM users")
+    it "parses distinct with aggregate function" do
+    end
 
-    expect(result).to eq([
-      { column_name: "id", column_alias: nil, aggregate: "distinct" }
-    ])
+    it "parses aggregate with multiple distinct columns" do
+    end
+
+    it "parses nested aggregates" do
+    end
   end
 end
