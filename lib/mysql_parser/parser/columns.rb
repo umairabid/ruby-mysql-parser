@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MysqlParser
   class Parser
     class Columns
@@ -11,6 +13,7 @@ module MysqlParser
         columns = []
         while @lexer.current && !@lexer.keyword?
           columns << parse_column
+          @lexer.advance unless @lexer.keyword?
           skip_comma
         end
         columns
@@ -18,24 +21,23 @@ module MysqlParser
 
       private
 
-      def parse_column(parent: nil)
-        puts "came here 1"
-        if distinct?
-          puts "came here 2"
-          parse_distinct
-        elsif aggregate?
-          parse_aggregate
-        elsif subquery?
-          parse_subquery
+      def parse_column
+        return { column_name: @lexer.current, column_alias: parse_alias } if plain_column?
+
+        res = if distinct?
+                parse_distinct
+              elsif aggregate?
+                parse_aggregate
+              else
+                parse_subquery
+              end
+        puts res.inspect
+        puts @lexer.current
+        unless distinct?
+        @lexer.advance if @lexer.peek.downcase == AS
+        res[:column_alias] = parse_alias
         end
-        result = if parent.nil?
-          { column_name: @lexer.current, column_alias: parse_alias }
-        else
-          parent[:columns] << { column_name: @lexer.current, column_alias: parse_alias }
-          parent
-        end
-        @lexer.advance
-        result
+        res
       end
 
       def parse_alias
@@ -46,30 +48,43 @@ module MysqlParser
       end
 
       def parse_aggregate
-        return unless AGGREGATE_FUNCTIONS.include?(@lexer.current&.downcase) && @lexer.peek == "("
-
-        func = @lexer.advance.downcase
+        parent = { type: :aggregate, aggregate: @lexer.current.downcase, columns: [] }
         @lexer.advance
-        func
+        while @lexer.current && @lexer.current != ')' && !@lexer.keyword?
+          puts @lexer.current
+          @lexer.advance if @lexer.current == '('
+          parent[:columns] << parse_column
+          @lexer.advance unless @lexer.current == ')' || @lexer.keyword?
+          skip_comma
+        end
+        parent
       end
 
       def parse_distinct
-        puts "came here 3"
         @lexer.advance
-        @lexer.advance if @lexer.current == "("
-
-        parse_column(parent: { type: :distinct, columns: [] })
+        parent = { type: :distinct, columns: [] }
+        while @lexer.current && !@lexer.keyword? && @lexer.current != ')'
+          parent[:columns] << parse_column
+          @lexer.advance unless @lexer.current == ')' || @lexer.keyword?
+          skip_comma
+        end
+        parent
       end
 
       def skip_comma
-        @lexer.advance if @lexer.current == ","
+        @lexer.advance if @lexer.current == ','
       end
 
       def aggregate?
+        AGGREGATE_FUNCTIONS.include?(@lexer.current&.downcase) && @lexer.peek == '('
       end
 
       def distinct?
-        @lexer.current&.downcase == "distinct"
+        @lexer.current&.downcase == 'distinct'
+      end
+
+      def plain_column?
+        !aggregate? && !distinct? && !subquery?
       end
     end
   end
