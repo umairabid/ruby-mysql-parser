@@ -22,6 +22,10 @@ module MysqlParser
       @tokens[@pos + 1]
     end
 
+    def peek_keyword?
+      TOKENS.include?(peek&.downcase)
+    end
+
     def keyword?
       TOKENS.include?(current&.downcase)
     end

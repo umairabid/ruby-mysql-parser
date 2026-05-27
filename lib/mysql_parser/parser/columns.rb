@@ -23,29 +23,33 @@ module MysqlParser
       private
 
       def parse_column
+        puts "parse_column: #{@lexer.current}"
         is_distinct = distinct?
         res = if is_distinct
-                parse_distinct
-              elsif aggregate?
-                parse_aggregate
-              elsif subquery?
-                parse_subquery
-              else
-                { column_name: @lexer.current }
-              end
+          parse_distinct
+        elsif aggregate?
+          parse_aggregate
+        elsif subquery?
+          parse_subquery
+        else
+          { column_name: @lexer.current }
+        end
 
         unless is_distinct
-          @lexer.advance if @lexer.peek.downcase == AS
           res[:column_alias] = parse_alias
         end
         res
       end
 
       def parse_alias
-        return unless @lexer.current&.downcase == AS
+        return if @lexer.peek == ',' || @lexer.peek_keyword? || @lexer.keyword? || @lexer.peek == ')'
 
-        @lexer.advance
-        @lexer.advance
+        
+        @lexer.advance if @lexer.peek.downcase == AS
+        puts "before alias advance: #{@lexer.current}"
+        @lexer.advance 
+        puts "after alias advance: #{@lexer.current}"
+        @lexer.current
       end
 
       def parse_aggregate
@@ -54,8 +58,8 @@ module MysqlParser
         while @lexer.current && @lexer.current != ')' && !@lexer.keyword?
           @lexer.advance if @lexer.current == '('
           parent[:columns] << parse_column
+          puts "agg after parse column: #{@lexer.current}"
           @lexer.advance unless @lexer.current == ')' || @lexer.keyword?
-          skip_comma
         end
         parent
       end
@@ -64,10 +68,11 @@ module MysqlParser
         @lexer.advance
         parent = { type: :distinct, columns: [] }
         while @lexer.current && !terminate_distinct?
+          puts "parse_distinct loop: #{@lexer.current}"
+          skip_comma
           parsed_column = parse_column
           parent[:columns] << parsed_column
           @lexer.advance unless terminate_distinct?
-          skip_comma
         end
         parent
       end

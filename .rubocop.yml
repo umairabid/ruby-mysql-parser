@@ -25,3 +25,6 @@ Layout/FirstArgumentIndentation:
 
 Layout/FirstParameterIndentation:
   EnforcedStyle: consistent
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
