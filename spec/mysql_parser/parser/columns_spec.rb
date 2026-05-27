@@ -74,7 +74,7 @@ RSpec.describe 'Columns Parser' do
     end
 
     it 'parses nested aggregates with distincts' do
-      sql = 'select count(distinct name), sum(distinct id, name), name from users'
+      sql = 'select count(distinct name), sum(distinct id, name), email from users'
       result = parse(sql)
       puts result.inspect
 
@@ -92,7 +92,7 @@ RSpec.describe 'Columns Parser' do
           columns: [{ type: :distinct,
                       columns: [{ column_name: 'id', column_alias: nil }, { column_name: 'name', column_alias: nil }] }]
         },
-        { column_name: 'name', column_alias: nil }
+        { column_name: 'email', column_alias: nil }
       ])
     end
 

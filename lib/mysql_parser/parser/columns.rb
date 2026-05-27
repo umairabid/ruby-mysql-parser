@@ -7,11 +7,13 @@ module MysqlParser
 
       def initialize(lexer)
         @lexer = lexer
+        @global_distinct = @lexer.current&.downcase == DISTINCT
       end
 
       def parse
         columns = []
         while @lexer.current && !@lexer.keyword?
+          puts @lexer.current
           columns << parse_column
           @lexer.advance unless @lexer.keyword?
           skip_comma
@@ -23,7 +25,7 @@ module MysqlParser
 
       def parse_column
         return { column_name: @lexer.current, column_alias: parse_alias } if plain_column?
-        
+
         is_distinct = distinct?
         res = if distinct?
                 parse_distinct
@@ -33,8 +35,8 @@ module MysqlParser
                 parse_subquery
               end
         unless is_distinct
-        @lexer.advance if @lexer.peek.downcase == AS
-        res[:column_alias] = parse_alias
+          @lexer.advance if @lexer.peek.downcase == AS
+          res[:column_alias] = parse_alias
         end
         res
       end
@@ -48,7 +50,7 @@ module MysqlParser
 
       def parse_aggregate
         parent = { type: :aggregate, aggregate: @lexer.current.downcase, columns: [] }
-        @lexer.advance 
+        @lexer.advance
         while @lexer.current && @lexer.current != ')' && !@lexer.keyword?
           @lexer.advance if @lexer.current == '('
           parent[:columns] << parse_column
@@ -61,9 +63,12 @@ module MysqlParser
       def parse_distinct
         @lexer.advance
         parent = { type: :distinct, columns: [] }
-        while @lexer.current && !@lexer.keyword?
+        puts "distinct: #{@lexer.current}"
+        while @lexer.current && !terminate_distinct?
+          puts @lexer.current
+          puts parse_column.inspect
           parent[:columns] << parse_column
-          @lexer.advance unless @lexer.keyword?
+          @lexer.advance unless terminate_distinct?
           skip_comma
         end
         parent
@@ -79,6 +84,10 @@ module MysqlParser
 
       def distinct?
         @lexer.current&.downcase == 'distinct'
+      end
+
+      def terminate_distinct?
+        @global_distinct ? @lexer.keyword? : @lexer.current == ')'
       end
 
       def plain_column?
