@@ -23,6 +23,7 @@ module MysqlParser
       private
 
       def parse_column
+        current = @lexer.current
         puts "parse_column: #{@lexer.current}"
         is_distinct = distinct?
         res = if is_distinct
@@ -34,7 +35,10 @@ module MysqlParser
         else
           { column_name: @lexer.current }
         end
-
+        puts 'AS' == AS
+        puts "is_distinct: #{is_distinct}"
+        puts "parsed_column: #{current}, result: #{res.inspect}"
+        puts "cursor after parsing column: #{@lexer.current}"
         unless is_distinct
           res[:column_alias] = parse_alias
         end
@@ -42,7 +46,8 @@ module MysqlParser
       end
 
       def parse_alias
-        return if @lexer.peek == ',' || @lexer.peek_keyword? || @lexer.keyword? || @lexer.peek == ')'
+        puts "lexer.peek: #{@lexer.peek}, lexer.peek_keyword?: #{@lexer.peek_keyword?}, lexer.peek != AS: #{@lexer.peek != AS}, lexer.peek == ')': #{@lexer.peek == ')'}"
+        return if @lexer.peek == ',' || (@lexer.peek_keyword? && @lexer.peek != AS) || @lexer.peek == ')'
 
         
         @lexer.advance if @lexer.peek.downcase == AS

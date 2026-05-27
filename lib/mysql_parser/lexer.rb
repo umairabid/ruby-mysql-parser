@@ -19,7 +19,7 @@ module MysqlParser
     end
 
     def peek
-      @tokens[@pos + 1]
+      @tokens[@pos + 1]&.downcase
     end
 
     def peek_keyword?
