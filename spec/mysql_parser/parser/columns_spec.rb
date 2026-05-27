@@ -40,7 +40,7 @@ RSpec.describe 'Columns Parser' do
       result = parse(sql)
 
       expect(result).to eq([
-        { type: :distinct, column_alias: nil,
+        { type: :distinct,
           columns: [{ column_name: 'name', column_alias: nil }] }
       ])
     end
@@ -50,7 +50,7 @@ RSpec.describe 'Columns Parser' do
       result = parse(sql)
 
       expect(result).to eq([
-        { type: :distinct, column_alias: nil,
+        { type: :distinct,
           columns: [{ column_name: 'name', column_alias: nil }, { column_name: 'age', column_alias: nil }] }
       ])
     end
@@ -62,7 +62,6 @@ RSpec.describe 'Columns Parser' do
       expect(result).to eq([
         {
           type: :distinct,
-          column_alias: nil,
           columns: [
             { type: :aggregate, aggregate: 'count', column_alias: nil,
               columns: [{ column_name: 'name', column_alias: nil }] },
@@ -77,20 +76,20 @@ RSpec.describe 'Columns Parser' do
     it 'parses nested aggregates with distincts' do
       sql = 'select count(distinct name), sum(distinct id, name), name from users'
       result = parse(sql)
+      puts result.inspect
 
       expect(result).to eq([
         {
           type: :aggregate,
           aggregate: 'count',
           column_alias: nil,
-          columns: [{ type: :distinct, column_alias: nil,
-                      columns: [{ column_name: 'name', column_alias: nil }] }]
+          columns: [{ type: :distinct, columns: [{ column_name: 'name', column_alias: nil }] }]
         },
         {
           type: :aggregate,
           aggregate: 'sum',
           column_alias: nil,
-          columns: [{ type: :distinct, column_alias: nil,
+          columns: [{ type: :distinct,
                       columns: [{ column_name: 'id', column_alias: nil }, { column_name: 'name', column_alias: nil }] }]
         },
         { column_name: 'name', column_alias: nil }
@@ -106,14 +105,14 @@ RSpec.describe 'Columns Parser' do
           type: :aggregate,
           aggregate: 'count',
           column_alias: 'uniq_name',
-          columns: [{ type: :distinct, column_alias: nil,
+          columns: [{ type: :distinct,
                       columns: [{ column_name: 'name', column_alias: nil }] }]
         },
         {
           type: :aggregate,
           aggregate: 'sum',
           column_alias: 'uniq_id',
-          columns: [{ type: :distinct, column_alias: nil,
+          columns: [{ type: :distinct,
                       columns: [{ column_name: 'id', column_alias: nil }, { column_name: 'name', column_alias: nil }] }]
         },
         { column_name: 'name', column_alias: nil }
