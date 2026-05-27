@@ -14,6 +14,13 @@ RSpec.describe 'Columns Parser' do
     ])
   end
 
+  it 'parses alias for plain column' do
+    result = parse('SELECT name AS username FROM users')
+    expect(result).to eq([
+      { column_name: 'name', column_alias: 'username' }
+    ])
+  end
+
   it 'parses aggregate with alias' do
     result = parse('SELECT AVG(price) AS avg_price FROM products')
 
@@ -76,7 +83,6 @@ RSpec.describe 'Columns Parser' do
     it 'parses nested aggregates with distincts' do
       sql = 'select count(distinct name), sum(distinct id, name), email from users'
       result = parse(sql)
-      puts result.inspect
 
       expect(result).to eq([
         {

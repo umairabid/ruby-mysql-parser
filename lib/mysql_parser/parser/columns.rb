@@ -13,7 +13,6 @@ module MysqlParser
       def parse
         columns = []
         while @lexer.current && !@lexer.keyword?
-          puts @lexer.current
           columns << parse_column
           @lexer.advance unless @lexer.keyword?
           skip_comma
@@ -24,16 +23,17 @@ module MysqlParser
       private
 
       def parse_column
-        return { column_name: @lexer.current, column_alias: parse_alias } if plain_column?
-
         is_distinct = distinct?
-        res = if distinct?
+        res = if is_distinct
                 parse_distinct
               elsif aggregate?
                 parse_aggregate
-              else
+              elsif subquery?
                 parse_subquery
+              else
+                { column_name: @lexer.current }
               end
+
         unless is_distinct
           @lexer.advance if @lexer.peek.downcase == AS
           res[:column_alias] = parse_alias
@@ -63,11 +63,9 @@ module MysqlParser
       def parse_distinct
         @lexer.advance
         parent = { type: :distinct, columns: [] }
-        puts "distinct: #{@lexer.current}"
         while @lexer.current && !terminate_distinct?
-          puts @lexer.current
-          puts parse_column.inspect
-          parent[:columns] << parse_column
+          parsed_column = parse_column
+          parent[:columns] << parsed_column
           @lexer.advance unless terminate_distinct?
           skip_comma
         end
