@@ -86,3 +86,4 @@ bundle exec rspec
 - JOIN clauses
 - ORDER BY, GROUP BY, HAVING
 - String literal handling (quoted values)
+- Arithmetic / mathematical expressions in columns (`price * quantity`, `id + 1`). Out of scope — the lexer splits on whitespace and parens so operators become standalone tokens, and rebuilding expressions would require an expression-grammar layer the current single-pass column loop can't accommodate. Each operand currently surfaces as its own column entry.

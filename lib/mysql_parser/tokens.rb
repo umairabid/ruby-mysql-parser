@@ -16,6 +16,7 @@ module MysqlParser
   BY = "by"
   ASC = "asc"
   DESC = "desc"
+  DISTINCT = "distinct"
 
   UNION = "union"
   ALL = "all"

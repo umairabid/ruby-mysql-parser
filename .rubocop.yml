@@ -10,3 +10,21 @@ Layout/HeredocIndentation:
 
 Style/MultipleComparison:
   Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstArgumentIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstParameterIndentation:
+  EnforcedStyle: consistent
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable

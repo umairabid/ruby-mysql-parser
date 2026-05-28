@@ -21,8 +21,8 @@ result = MysqlParser.parse("SELECT id, name FROM users WHERE active = 1")
 ```ruby
 MysqlParser.parse("SELECT id, name AS username FROM users")[:select]
 # [
-#   { column_name: "id", column_alias: nil, aggregate: nil },
-#   { column_name: "name", column_alias: "username", aggregate: nil }
+#   { column_name: "id", column_alias: nil },
+#   { column_name: "name", column_alias: "username" }
 # ]
 ```
 
@@ -44,9 +44,18 @@ Supported: `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `GROUP_CONCAT`, `JSON_ARRAYAGG`,
 ```ruby
 MysqlParser.parse("SELECT COUNT(*) AS total, name FROM users")[:select]
 # [
-#   { column_name: "*", column_alias: "total", aggregate: "count" },
-#   { column_name: "name", column_alias: nil, aggregate: nil }
+#   { type: :aggregate, aggregate: "count", column_alias: "total", columns: [{ column_name: "*", column_alias: nil }] },
+#   { column_name: "name", column_alias: nil }
 # ]
+```
+
+### DISTINCT
+
+Supports global `DISTINCT` and `DISTINCT` within aggregates.
+
+```ruby
+MysqlParser.parse("SELECT DISTINCT name FROM users")[:select]
+# [{ type: :distinct, columns: [{ column_name: "name", column_alias: nil }] }]
 ```
 
 ### FROM
@@ -105,12 +114,11 @@ MysqlParser.parse(
 
 Operators: `=`, `!=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IN`, `NOT IN`, `IS`, `IS NOT`, `BETWEEN`
 
+Supports string literals with spaces.
+
 ```ruby
-MysqlParser.parse("SELECT * FROM users WHERE active = 1 AND role = admin")[:where]
-# [
-#   { left_side: "active", operator: "=", right_side: "1" },
-#   { joiner: "and", left_side: "role", operator: "=", right_side: "admin" }
-# ]
+MysqlParser.parse("SELECT * FROM users WHERE name = 'John Doe'")[:where]
+# [{ left_side: "name", operator: "=", right_side: "'John Doe'" }]
 ```
 
 Grouped conditions:
@@ -150,22 +158,26 @@ Subqueries are supported anywhere and produce nested hashes with the same struct
 In columns:
 
 ```ruby
-MysqlParser.parse("SELECT (SELECT MAX(id) FROM users) AS max_id FROM dual")[:select][0][:column_name]
-# { select: [{ column_name: "id", column_alias: nil, aggregate: "max" }], from: { name: "users", alias: nil } }
+MysqlParser.parse("SELECT (SELECT MAX(id) FROM users) AS max_id FROM dual")[:select][0]
+# {
+#   select: [{ type: :aggregate, aggregate: "max", columns: [{ column_name: "id", column_alias: nil }], column_alias: nil }],
+#   from: { name: "users", alias: nil },
+#   column_alias: "max_id"
+# }
 ```
 
 In FROM:
 
 ```ruby
 MysqlParser.parse("SELECT * FROM (SELECT id FROM users) AS subq")[:from][:name]
-# { select: [{ column_name: "id", column_alias: nil, aggregate: nil }], from: { name: "users", alias: nil } }
+# { select: [{ column_name: "id", column_alias: nil }], from: { name: "users", alias: nil } }
 ```
 
 In JOINs:
 
 ```ruby
 MysqlParser.parse("SELECT * FROM users JOIN (SELECT user_id FROM orders) AS o ON users.id = o.user_id")[:joins][0][:table][:name]
-# { select: [...], from: { name: "orders", alias: nil } }
+# { select: [{ column_name: "user_id", column_alias: nil }], from: { name: "orders", alias: nil } }
 ```
 
 In WHERE (via IN):
@@ -218,8 +230,6 @@ MysqlParser.parse("SELECT id FROM a UNION SELECT id FROM b UNION ALL SELECT id F
 ## Not Supported
 
 - `GROUP BY`, `HAVING`
-- `DISTINCT`
-- String literals (`WHERE name = 'John Doe'` — spaces in quoted strings break the lexer)
 - Multi-token expressions in columns (`CASE WHEN ... END`, arithmetic like `price * qty`)
 - `OFFSET`
 - Window functions (`OVER`, `PARTITION BY`)
