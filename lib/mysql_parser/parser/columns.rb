@@ -23,8 +23,7 @@ module MysqlParser
       private
 
       def parse_column
-        current = @lexer.current
-        puts "parse_column: #{@lexer.current}"
+        @lexer.current
         is_distinct = distinct?
         res = if is_distinct
           parse_distinct
@@ -35,25 +34,15 @@ module MysqlParser
         else
           { column_name: @lexer.current }
         end
-        puts 'AS' == AS
-        puts "is_distinct: #{is_distinct}"
-        puts "parsed_column: #{current}, result: #{res.inspect}"
-        puts "cursor after parsing column: #{@lexer.current}"
-        unless is_distinct
-          res[:column_alias] = parse_alias
-        end
+        res[:column_alias] = parse_alias unless is_distinct
         res
       end
 
       def parse_alias
-        puts "lexer.peek: #{@lexer.peek}, lexer.peek_keyword?: #{@lexer.peek_keyword?}, lexer.peek != AS: #{@lexer.peek != AS}, lexer.peek == ')': #{@lexer.peek == ')'}"
         return if @lexer.peek == ',' || (@lexer.peek_keyword? && @lexer.peek != AS) || @lexer.peek == ')'
 
-        
         @lexer.advance if @lexer.peek.downcase == AS
-        puts "before alias advance: #{@lexer.current}"
-        @lexer.advance 
-        puts "after alias advance: #{@lexer.current}"
+        @lexer.advance
         @lexer.current
       end
 
@@ -63,7 +52,6 @@ module MysqlParser
         while @lexer.current && @lexer.current != ')' && !@lexer.keyword?
           @lexer.advance if @lexer.current == '('
           parent[:columns] << parse_column
-          puts "agg after parse column: #{@lexer.current}"
           @lexer.advance unless @lexer.current == ')' || @lexer.keyword?
         end
         parent
@@ -73,7 +61,6 @@ module MysqlParser
         @lexer.advance
         parent = { type: :distinct, columns: [] }
         while @lexer.current && !terminate_distinct?
-          puts "parse_distinct loop: #{@lexer.current}"
           skip_comma
           parsed_column = parse_column
           parent[:columns] << parsed_column

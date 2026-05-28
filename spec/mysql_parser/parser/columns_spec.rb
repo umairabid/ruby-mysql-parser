@@ -23,15 +23,13 @@ RSpec.describe 'Columns Parser' do
 
   it 'parses alias without as' do
     result = parse('Select name username from users')
-    expect(result).to eq([ 
+    expect(result).to eq([
       { column_name: 'name', column_alias: 'username' }
     ])
   end
 
   it 'parses aggregate with alias' do
     result = parse('SELECT AVG(price) AS avg_price FROM products')
-
-    puts result.inspect
 
     expect(result).to eq([
       { type: :aggregate, aggregate: 'avg', column_alias: 'avg_price',
@@ -64,8 +62,6 @@ RSpec.describe 'Columns Parser' do
     it 'parses distinct on multiple columns' do
       sql = 'SELECT DISTINCT name, age FROM users'
       result = parse(sql)
-
-      puts result.inspect
 
       expect(result).to eq([
         { type: :distinct,

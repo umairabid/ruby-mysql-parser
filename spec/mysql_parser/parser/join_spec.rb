@@ -71,8 +71,8 @@ RSpec.describe MysqlParser::Parser::Join do
 
     expect(result[0][:join_type]).to eq("join")
     expect(result[0][:table][:name][:select]).to eq([
-      { column_name: "id", column_alias: nil, aggregate: nil },
-      { column_name: "user_id", column_alias: nil, aggregate: nil }
+      { column_name: "id", column_alias: nil },
+      { column_name: "user_id", column_alias: nil }
     ])
     expect(result[0][:table][:name][:from]).to eq({ name: "orders", alias: nil })
     expect(result[0][:table][:alias]).to eq("o")

@@ -111,7 +111,7 @@ RSpec.describe MysqlParser::Parser::Where do
 
     expect(result[0][:left_side]).to eq("id")
     expect(result[0][:operator]).to eq("in")
-    expect(result[0][:right_side][:select]).to eq([{ column_name: "user_id", column_alias: nil, aggregate: nil }])
+    expect(result[0][:right_side][:select]).to eq([{ column_name: "user_id", column_alias: nil }])
     expect(result[0][:right_side][:from]).to eq({ name: "orders", alias: nil })
   end
 
@@ -120,7 +120,7 @@ RSpec.describe MysqlParser::Parser::Where do
 
     expect(result[0][:left_side]).to eq("exists")
     expect(result[0][:right_side]).to be_nil
-    expect(result[0][:subquery][:select]).to eq([{ column_name: "1", column_alias: nil, aggregate: nil }])
+    expect(result[0][:subquery][:select]).to eq([{ column_name: "1", column_alias: nil }])
     expect(result[0][:subquery][:from]).to eq({ name: "orders", alias: nil })
     expect(result[0][:subquery][:where]).to eq([
       { left_side: "orders.user_id", operator: "=", right_side: "users.id" }
@@ -140,7 +140,7 @@ RSpec.describe MysqlParser::Parser::Where do
 
     expect(result[0][:left_side]).to eq("not exists")
     expect(result[0][:right_side]).to be_nil
-    expect(result[0][:subquery][:select]).to eq([{ column_name: "1", column_alias: nil, aggregate: nil }])
+    expect(result[0][:subquery][:select]).to eq([{ column_name: "1", column_alias: nil }])
     expect(result[0][:subquery][:from]).to eq({ name: "orders", alias: nil })
   end
 
