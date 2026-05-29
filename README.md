@@ -11,6 +11,8 @@ Parses MySQL SELECT queries into structured Ruby hashes. Built for query analysi
   - [FROM](#from)
   - [JOINs](#joins)
   - [WHERE Clause](#where-clause)
+  - [GROUP BY](#group-by)
+  - [HAVING](#having)
   - [Subqueries](#subqueries)
   - [ORDER BY](#order-by)
   - [LIMIT](#limit)
@@ -149,11 +151,25 @@ MysqlParser.parse("SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)"
 # { select: [{ column_name: "user_id", column_alias: nil }], from: { name: "orders", alias: nil } }
 ```
 
-BETWEEN:
+### BETWEEN:
 
 ```ruby
 MysqlParser.parse("SELECT * FROM users WHERE age BETWEEN 18 AND 35")[:where]
 # [{ left_side: "age", operator: "between", right_side: "18 AND 35" }]
+```
+
+### GROUP BY
+
+```ruby
+MysqlParser.parse("SELECT count(*) FROM users GROUP BY department_id, role")[:group_by]
+# ["department_id", "role"]
+```
+
+### HAVING
+
+```ruby
+MysqlParser.parse("SELECT id FROM users GROUP BY id HAVING id > 10")[:having]
+# [{ left_side: "id", operator: ">", right_side: "10" }]
 ```
 
 ### Subqueries
@@ -215,7 +231,7 @@ MysqlParser.parse("SELECT id FROM users UNION ALL SELECT id FROM admins")
 
 ## Not Supported
 
-- `GROUP BY`, `HAVING`
+- Arbitrary function calls (only the specific [Aggregate Functions](#aggregate-functions) listed above are supported)
 - Multi-token expressions in columns (`CASE WHEN ... END`, arithmetic like `price * qty`)
 - `OFFSET`
 - Window functions (`OVER`, `PARTITION BY`)

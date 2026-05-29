@@ -50,6 +50,13 @@ module MysqlParser
           @lexer.advance
           @lexer.advance if @lexer.current&.downcase == "by"
           result[:order_by] = OrderBy.new(@lexer).parse
+        when "group"
+          @lexer.advance
+          @lexer.advance if @lexer.current&.downcase == "by"
+          result[:group_by] = GroupBy.new(@lexer).parse
+        when "having"
+          @lexer.advance
+          result[:having] = Having.new(@lexer).parse
         when "limit"
           @lexer.advance
           result[:limit] = @lexer.advance

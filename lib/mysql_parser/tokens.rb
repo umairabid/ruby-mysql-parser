@@ -18,13 +18,16 @@ module MysqlParser
   DESC = "desc"
   DISTINCT = "distinct"
 
+  GROUP = "group"
+  HAVING = "having"
+
   UNION = "union"
   ALL = "all"
 
   EXISTS = "exists"
   NOT_EXISTS = "not exists"
 
-  TOKENS = [SELECT, FROM, AS, LIMIT, WHERE, AND, OR, JOIN, INNER, LEFT, RIGHT, CROSS, ON, ORDER, ASC, DESC, UNION].freeze
+  TOKENS = [SELECT, FROM, AS, LIMIT, WHERE, AND, OR, JOIN, INNER, LEFT, RIGHT, CROSS, ON, ORDER, GROUP, HAVING, ASC, DESC, UNION].freeze
 
   OPERATORS = ["=", "!=", "<>", "<", ">", "<=", ">=", "like", "not like", "in", "not in", "is", "is not", "between"].freeze
 
