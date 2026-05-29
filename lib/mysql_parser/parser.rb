@@ -59,7 +59,17 @@ module MysqlParser
           result[:having] = Having.new(@lexer).parse
         when "limit"
           @lexer.advance
-          result[:limit] = @lexer.advance
+          first_val = @lexer.advance
+          if @lexer.current == ","
+            @lexer.advance
+            result[:offset] = first_val
+            result[:limit] = @lexer.advance
+          else
+            result[:limit] = first_val
+          end
+        when "offset"
+          @lexer.advance
+          result[:offset] = @lexer.advance
         else
           @lexer.advance
         end

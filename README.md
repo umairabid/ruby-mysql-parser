@@ -15,7 +15,7 @@ Parses MySQL SELECT queries into structured Ruby hashes. Built for query analysi
   - [HAVING](#having)
   - [Subqueries](#subqueries)
   - [ORDER BY](#order-by)
-  - [LIMIT](#limit)
+  - [LIMIT / OFFSET](#limit--offset)
   - [UNION / UNION ALL](#union--union-all)
 - [Not Supported](#not-supported)
 - [Development](#development)
@@ -206,11 +206,16 @@ MysqlParser.parse("SELECT * FROM users ORDER BY created_at DESC, name")[:order_b
 # ]
 ```
 
-### LIMIT
+### LIMIT / OFFSET
+
+Supports `LIMIT count`, `LIMIT count OFFSET offset`, and `LIMIT offset, count`.
 
 ```ruby
-MysqlParser.parse("SELECT * FROM users LIMIT 10")[:limit]
-# "10"
+MysqlParser.parse("SELECT * FROM users LIMIT 10 OFFSET 5")
+# { limit: "10", offset: "5", ... }
+
+MysqlParser.parse("SELECT * FROM users LIMIT 5, 10")
+# { limit: "10", offset: "5", ... }
 ```
 
 ### UNION / UNION ALL
@@ -233,7 +238,6 @@ MysqlParser.parse("SELECT id FROM users UNION ALL SELECT id FROM admins")
 
 - Arbitrary function calls (only the specific [Aggregate Functions](#aggregate-functions) listed above are supported)
 - Multi-token expressions in columns (`CASE WHEN ... END`, arithmetic like `price * qty`)
-- `OFFSET`
 - Window functions (`OVER`, `PARTITION BY`)
 
 ---
