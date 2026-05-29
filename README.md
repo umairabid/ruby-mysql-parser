@@ -2,6 +2,25 @@
 
 Parses MySQL SELECT queries into structured Ruby hashes. Built for query analysis — understand query shape, count joins, detect aggregates, inspect conditions.
 
+- [Installation](#installation)
+- [Usage](#usage)
+- [Features](#features)
+  - [Columns](#columns)
+  - [Aggregate Functions](#aggregate-functions)
+  - [DISTINCT](#distinct)
+  - [FROM](#from)
+  - [JOINs](#joins)
+  - [WHERE Clause](#where-clause)
+  - [Subqueries](#subqueries)
+  - [ORDER BY](#order-by)
+  - [LIMIT](#limit)
+  - [UNION / UNION ALL](#union--union-all)
+- [Not Supported](#not-supported)
+- [Development](#development)
+  - [TiDB Parser (Go)](#tidb-parser-go)
+
+---
+
 ## Installation
 
 ```ruby
@@ -16,6 +35,10 @@ require "mysql_parser"
 result = MysqlParser.parse("SELECT id, name FROM users WHERE active = 1")
 ```
 
+---
+
+## Features
+
 ### Columns
 
 ```ruby
@@ -24,17 +47,6 @@ MysqlParser.parse("SELECT id, name AS username FROM users")[:select]
 #   { column_name: "id", column_alias: nil },
 #   { column_name: "name", column_alias: "username" }
 # ]
-```
-
-Subquery as column:
-
-```ruby
-MysqlParser.parse("SELECT (SELECT MAX(id) FROM users) AS max_id FROM dual")[:select][0]
-# {
-#   column_name: { select: [{ column_name: "id", column_alias: nil, aggregate: "max" }], from: { name: "users", alias: nil } },
-#   column_alias: "max_id",
-#   aggregate: nil
-# }
 ```
 
 ### Aggregate Functions
@@ -63,13 +75,6 @@ MysqlParser.parse("SELECT DISTINCT name FROM users")[:select]
 ```ruby
 MysqlParser.parse("SELECT * FROM users AS u")[:from]
 # { name: "users", alias: "u" }
-```
-
-Subquery in FROM:
-
-```ruby
-MysqlParser.parse("SELECT * FROM (SELECT id FROM users) AS subq")[:from]
-# { name: { select: [...], from: { name: "users", alias: nil } }, alias: "subq" }
 ```
 
 ### JOINs
@@ -107,12 +112,12 @@ Join with subquery table:
 MysqlParser.parse(
   "SELECT * FROM users JOIN (SELECT user_id FROM orders) AS o ON users.id = o.user_id"
 )[:joins][0][:table]
-# { name: { select: [...], from: { name: "orders", alias: nil } }, alias: "o" }
+# { name: { select: [{ column_name: "user_id", column_alias: nil }], from: { name: "orders", alias: nil } }, alias: "o" }
 ```
 
-### WHERE
+### WHERE Clause
 
-Operators: `=`, `!=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IN`, `NOT IN`, `IS`, `IS NOT`, `BETWEEN`
+Operators: `=`, `!=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IN`, `NOT IN`, `IS`, `IS NOT`, `BETWEEN`, `EXISTS`, `NOT EXISTS`
 
 Supports string literals with spaces.
 
@@ -141,7 +146,7 @@ MysqlParser.parse("SELECT * FROM users WHERE id IN (1, 2, 3)")[:where]
 # [{ left_side: "id", operator: "in", right_side: "( 1 , 2 , 3 )" }]
 
 MysqlParser.parse("SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)")[:where][0][:right_side]
-# { select: [...], from: { name: "orders", alias: nil } }
+# { select: [{ column_name: "user_id", column_alias: nil }], from: { name: "orders", alias: nil } }
 ```
 
 BETWEEN:
@@ -173,20 +178,6 @@ MysqlParser.parse("SELECT * FROM (SELECT id FROM users) AS subq")[:from][:name]
 # { select: [{ column_name: "id", column_alias: nil }], from: { name: "users", alias: nil } }
 ```
 
-In JOINs:
-
-```ruby
-MysqlParser.parse("SELECT * FROM users JOIN (SELECT user_id FROM orders) AS o ON users.id = o.user_id")[:joins][0][:table][:name]
-# { select: [{ column_name: "user_id", column_alias: nil }], from: { name: "orders", alias: nil } }
-```
-
-In WHERE (via IN):
-
-```ruby
-MysqlParser.parse("SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)")[:where][0][:right_side]
-# { select: [...], from: { name: "orders", alias: nil } }
-```
-
 ### ORDER BY
 
 Defaults to `"asc"` when direction is omitted.
@@ -208,24 +199,19 @@ MysqlParser.parse("SELECT * FROM users LIMIT 10")[:limit]
 
 ### UNION / UNION ALL
 
-Single SELECT returns a plain hash. UNION wraps multiple selects in a `union` array — first entry has no `union_type`, subsequent ones do.
+Single SELECT returns a plain hash. UNION wraps multiple selects in a `union` array.
 
 ```ruby
 MysqlParser.parse("SELECT id FROM users UNION ALL SELECT id FROM admins")
 # {
 #   union: [
-#     { select: [{ column_name: "id", column_alias: nil, aggregate: nil }], from: { name: "users", alias: nil } },
-#     { union_type: "union all", select: [{ column_name: "id", column_alias: nil, aggregate: nil }], from: { name: "admins", alias: nil } }
+#     { select: [{ column_name: "id", column_alias: nil }], from: { name: "users", alias: nil } },
+#     { union_type: "union all", select: [{ column_name: "id", column_alias: nil }], from: { name: "admins", alias: nil } }
 #   ]
 # }
 ```
 
-Chains of N unions:
-
-```ruby
-MysqlParser.parse("SELECT id FROM a UNION SELECT id FROM b UNION ALL SELECT id FROM c")[:union].length
-# 3
-```
+---
 
 ## Not Supported
 
@@ -234,14 +220,14 @@ MysqlParser.parse("SELECT id FROM a UNION SELECT id FROM b UNION ALL SELECT id F
 - `OFFSET`
 - Window functions (`OVER`, `PARTITION BY`)
 
+---
+
 ## Development
 
-```
+```bash
 bin/setup
 bundle exec rspec
 ```
-
-Use `bin/console` for an interactive session.
 
 ### TiDB Parser (Go)
 
@@ -249,7 +235,7 @@ A Go-based wrapper around [PingCap's TiDB parser](https://github.com/pingcap/tid
 
 #### Setup
 
-```
+```bash
 brew install go
 cd tools/tidb-parser
 go build -o tidb-parser .
@@ -257,7 +243,7 @@ go build -o tidb-parser .
 
 #### CLI
 
-```
+```bash
 tools/tidb-parser/tidb-parser "SELECT id, name FROM users WHERE active = 1"
 echo "SELECT id FROM users" | tools/tidb-parser/tidb-parser
 ```
