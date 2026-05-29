@@ -7,6 +7,8 @@ require_relative "mysql_parser/parser/from"
 require_relative "mysql_parser/parser/where"
 require_relative "mysql_parser/parser/join"
 require_relative "mysql_parser/parser/order_by"
+require_relative "mysql_parser/parser/group_by"
+require_relative "mysql_parser/parser/having"
 require_relative "mysql_parser/parser"
 
 module MysqlParser
